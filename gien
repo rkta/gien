@@ -61,7 +61,7 @@ def get_options():
 
 def fetch_rate_limit(api):
     limit = api.get_rate_limit()
-    return "{}/{} until {}".format(limit.rate.remaining,
+    return "{}/{}, reset @ {}".format(limit.rate.remaining,
             limit.rate.limit, limit.rate.reset)
 
 def fetch_data(opts):
