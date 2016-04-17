@@ -1,0 +1,79 @@
+## gien
+
+gien is a tool for exporting the contents of any Github issue tracker to
+a local [mbox](https://en.wikipedia.org/wiki/Mbox) file as email,
+thereby mapping all issues and comments to email threads.
+
+The structure of the exported email threads mimics Github's email
+notifications: There is a root message for every issue, and all comments
+on that issue reply to that root.
+
+We believe that this tool will prove itself helpful when leaving Github,
+or just for archiving bug trackers. I am using it for either purpose.
+
+### Email format
+
+The exported emails have the content type multipart/alternative and
+consist of a MIME attachment in text/html format containing a markdown
+rendering of the Github message text and a text/plain MIME attachment
+containing the original body text.
+
+Because I'm just using python-markdown for now, some Github-flavoured
+things could be rendered incorrectly.
+
+### Issue tracker mirroring
+
+When specifying an output mbox file that already exists and contains
+messages, the program will just append to that file. You can use that
+behaviour to poll the bug tracker of any Github repository for updates
+for any real email client will help you to delete any dupes.
+
+More intelligent features catering to the purpoes of mirroring issue
+trackers can be expected in the feature, including partial updates.
+There is no ETA, though.
+
+### Authentication
+
+Using HTTP basic authentication is not optional at the moment because of
+the API [rate limit](https://developer.github.com/v3/#rate-limiting),
+which in pretty much all cases is too low for me.
+
+### Dependencies
+
+* python3
+* [python-pygithub](http://jacquev6.github.com/PyGithub)
+* [python-markdown](http://pypi.python.org/pypi/Markdown)
+
+### Synopsis
+
+```
+usage: gien [-h] [-u USER] [-p PASSWORD] [-r REPOSITORY]
+            [-i {all,open,closed}] [-o OUTPUT] [-l]
+
+Export Github issue trackers to an mbox email mailbox
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u USER, --user USER  Github API authentication: user
+  -p PASSWORD, --password PASSWORD
+                        Github API authentication: password
+  -r REPOSITORY, --repository REPOSITORY
+                        Github repository name the issue tracker of which
+                        shall be exported. Example: 2ion/gien
+  -i {all,open,closed}, --issues {all,open,closed}
+                        Filter issues by state. Defaults to all.
+  -o OUTPUT, --output OUTPUT
+                        Path to the output mbox file.
+  -l, --labels          If the issue has labels, add them to the email
+                        Subject: header.
+```
+
+### Usage example
+
+```
+./gien --user $user --password $password -r 2ion/forecast -i open -o out.mbox
+```
+
+### License
+
+GNU General Public License v3 or later. See LICENSE for details.
