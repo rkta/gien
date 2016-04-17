@@ -133,7 +133,6 @@ def make_thread(opts, r, o):
             In_Reply_To=common_root,
             References=common_root))
         print("\t => {}".format(thread[-1]['Message-ID']), file=sys.stderr)
-        sys.stderr.flush()
 
     return thread
 
