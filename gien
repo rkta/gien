@@ -142,6 +142,7 @@ def main():
     data, repo = fetch_data(opts)
 
     mb = mailbox.mbox(opts.output)
+    mb.lock()
 
     for issue in data:
         for msg in make_thread(opts, repo, issue):
