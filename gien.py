@@ -20,12 +20,13 @@ from argparse import ArgumentParser
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from github import Github, GithubException, Issue
+from github import Github, GithubException
+from progressbar import ProgressBar, Bar
 import email.utils
 import mailbox
 import markdown
-import os
 import sys
+import shutil
 
 def die(*args):
     print("[error]", *args, file=sys.stderr)
@@ -53,7 +54,7 @@ def get_options():
     ap.add_argument("-l", "--labels",
             action="store_true",
             default=False,
-            help="If the issue has labels, add them to the email Subject: header.")
+            help="If the issue has labels, add them to the email Subject: header. If the issue has been marked as closed, at a [CLOSED] label to the subject.")
     r = ap.parse_args()
     if not (r.user and r.password):
         die("Missing option: both --user and --password are required.")
@@ -104,13 +105,28 @@ def render_message(body, **kwargs):
     return m
 
 def make_thread(opts, r, o):
-    print("Threading: {}/{}: {}".format(r.full_name, o['issue'].id, o['issue'].title), file=sys.stderr)
+    lbl = "{}: {}".format(o['issue'].id, o['issue'].title)
+    (w, _) = shutil.get_terminal_size()
+    lw = int(w * 0.6)
+    if len(lbl)>lw-1:
+        s = lw-4
+        lbl = lbl[:s]
+        lbl += "... "
+    else:
+        lbl = lbl.ljust(lw, ' ')
+    pb = ProgressBar(
+            widgets=[ lbl, Bar(left='[', right=']') ],
+            maxval=o['issue'].comments+1).start()
+    tick = 1
 
     common_Subject = "{}".format(o['issue'].title)
     if opts.labels:
         for label in o['issue'].labels:
             common_Subject += " [{}]".format(label.name)
+        if o['issue'].closed_at:
+            common_Subject += " [CLOSED]"
     common_Subject_Re = "Re: " + common_Subject
+
     common_To = h_to(r)
 
     thread = [ render_message(o['issue'].body,
@@ -132,8 +148,10 @@ def make_thread(opts, r, o):
             Message_ID=h_message_id(r.full_name, o['issue'].id, comment.id),
             In_Reply_To=common_root,
             References=common_root))
-        print("\t => {}".format(thread[-1]['Message-ID']), file=sys.stderr)
+        tick += 1
+        pb.update(tick)
 
+    pb.finish()
     return thread
 
 def main():
