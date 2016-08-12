@@ -56,8 +56,8 @@ def get_options():
             default=False,
             help="If the issue has labels, add them to the email Subject: header. If the issue has been marked as closed, at a [CLOSED] label to the subject.")
     r = ap.parse_args()
-    if not (r.user and r.password):
-        die("Missing option: both --user and --password are required.")
+    if not (r.user and r.password and r.repository):
+        die("Missing option: --user, --password and --repository are required.")
     return r
 
 def fetch_rate_limit(api):
