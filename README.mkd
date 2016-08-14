@@ -43,14 +43,15 @@ which in pretty much all cases is too low for me.
 * python3
 * [python-pygithub](http://jacquev6.github.com/PyGithub)
 * [python-markdown](http://pypi.python.org/pypi/Markdown)
+* [python-progressbar](https://github.com/niltonvolpato/python-progressbar)
 
 ### Synopsis
 
 ```
-usage: gien [-h] [-u USER] [-p PASSWORD] [-r REPOSITORY]
-            [-i {all,open,closed}] [-o OUTPUT] [-l]
+usage: gien.py [-h] [-u USER] [-p PASSWORD] [-r REPOSITORY]
+               [-i {all,open,closed}] [-o OUTPUT] [-l]
 
-Export Github issue trackers to an mbox email mailbox
+Export Github issue trackers to local email storage
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -65,7 +66,8 @@ optional arguments:
   -o OUTPUT, --output OUTPUT
                         Path to the output mbox file.
   -l, --labels          If the issue has labels, add them to the email
-                        Subject: header.
+                        Subject: header. If the issue has been marked as
+                        closed, at a [CLOSED] label to the subject.
 ```
 
 ### Usage example
