@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# gien - export Github issue tracker contents to local email storage
+# gien - export Github issue tracker & wiki contents to local email storage
 # Copyright (C) 2016 2ion <dev@2ion.de>
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from argparse import ArgumentParser
-from email.message import Message
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from github import Github, GithubException
-from progressbar import ProgressBar, Bar
-import email.utils
-import mailbox
-import markdown
+# Core
+import os
 import sys
-import shutil
+from argparse               import ArgumentParser
+from email.message          import Message
+from email.mime.multipart   import MIMEMultipart
+from email.mime.text        import MIMEText
+from email.utils            import formatdate
+from hashlib                import md5
+from mailbox                import mbox
+from shutil                 import get_terminal_size
+from tempfile               import TemporaryDirectory
+# Third-party
+from github                 import Github, GithubException
+from progressbar            import ProgressBar, Bar
+from pygit2                 import clone_repository
+from markdown               import markdown
 
 def die(*args):
     print("[error]", *args, file=sys.stderr)
@@ -55,6 +61,10 @@ def get_options():
             action="store_true",
             default=False,
             help="If the issue has labels, add them to the email Subject: header. If the issue has been marked as closed, at a [CLOSED] label to the subject.")
+    ap.add_argument("-w", "--wiki",
+            default=False,
+            action="store_true",
+            help="Convert the associated wiki into an email thread.")
     r = ap.parse_args()
     if not (r.user and r.password and r.repository):
         die("Missing option: --user, --password and --repository are required.")
@@ -88,7 +98,7 @@ def h_from(obj):
     return "{} <{}@noreply.github.com>".format(obj.user.login, obj.user.login)
 
 def h_date(obj):
-    return email.utils.formatdate(obj.created_at.timestamp())
+    return formatdate(obj.created_at.timestamp())
 
 def h_subject(obj, in_reply=True):
     return ("Re: {}" if in_reply else "{}").format(obj.title)
@@ -100,13 +110,13 @@ def render_message(body, **kwargs):
     m = MIMEMultipart('alternative')
     for k,v in kwargs.items():
         m[k.replace("_", "-")] = v
-    m.attach(MIMEText(markdown.markdown(body), 'html'))
+    m.attach(MIMEText(markdown(body), 'html'))
     m.attach(MIMEText(body, 'plain'))
     return m
 
 def make_thread(opts, r, o):
     lbl = "{}: {}".format(o['issue'].id, o['issue'].title)
-    (w, _) = shutil.get_terminal_size()
+    (w, _) = get_terminal_size()
     lw = int(w * 0.6)
     if len(lbl)>lw-1:
         s = lw-4
@@ -154,11 +164,24 @@ def make_thread(opts, r, o):
     pb.finish()
     return thread
 
+def thread_wiki(repo):
+    def h_msgid(res):
+        h = md5()
+        h.update(res.encode('utf-8'))
+        return "{}@gien.local".format(h.hexdigest())
+    h_from = "{}-wiki@noreply.github.com".format(repo.full_name)
+    th = []
+    with TemporaryDirectory() as DIR:
+        clone_repository(repo.clone_url, DIR)
+        for p, n, f in os.walk(DIR):
+            pass
+    pass
+
 def main():
     opts = get_options()
     data, repo = fetch_data(opts)
 
-    mb = mailbox.mbox(opts.output)
+    mb = mbox(opts.output)
     mb.lock()
 
     for issue in data:
