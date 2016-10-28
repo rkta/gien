@@ -50,7 +50,7 @@ which in pretty much all cases is too low for me.
 
 ```
 usage: gien.py [-h] [-u USER] [-p PASSWORD] [-r REPOSITORY]
-               [-i {all,open,closed}] [-o OUTPUT] [-l]
+               [-i {all,open,closed}] [-o OUTPUT] [-l] [-w]
 
 Export Github issue trackers to local email storage
 
@@ -69,6 +69,7 @@ optional arguments:
   -l, --labels          If the issue has labels, add them to the email
                         Subject: header. If the issue has been marked as
                         closed, at a [CLOSED] label to the subject.
+  -w, --wiki            Convert the associated wiki into an email thread.
 ```
 
 ### Usage example
