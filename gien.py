@@ -175,7 +175,7 @@ def make_thread(opts, r, o):
 def thread_wiki(repo):
     h_from = "{}-wiki@noreply.github.com".format(repo.full_name)
     thread = []
-    root_msgid = hexhex(repo.full_name)
+    root_msgid = "{}@{}.wiki".format(hexhex(repo.full_name), repo.name)
     with TemporaryDirectory() as DIR:
         clone_repository(repo.clone_url.replace(".git",".wiki"), DIR)
         for r,d,f in os.walk(DIR):
@@ -185,13 +185,14 @@ def thread_wiki(repo):
                 if ff.endswith(".md"):
                     path = "{}/{}".format(r,ff)
                     with open(path, "r") as FILE:
-                        msgid = "{}@{}.wiki".format(hexhex(path), repo) if len(thread)>1 else root_msgid
+                        msgid = "{}@{}.wiki".format(hexhex(path), repo.name) if len(thread)>0 else root_msgid
                         thread.append(render_message(FILE.read(),
                             Subject="[WIKI] " + ff[:-3],
                             From=h_from,
                             Message_ID=msgid,
                             To=h_to(repo),
                             In_Reply_To=root_msgid,
+                            References=root_msgid,
                             Date=formatdate()))
     return thread
 
