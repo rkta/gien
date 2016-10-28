@@ -32,6 +32,17 @@ More intelligent features catering to the purpoes of mirroring issue
 trackers can be expected in the feature, including partial updates.
 There is no ETA, though.
 
+### Wiki mirroring
+
+Repository wikis can be cloned just like the repos themselves and yield
+a collection of markdown files corressponding to the individual 'pages'.
+
+Currently, when specifying the --wiki option, wiki pages are threaded
+just like the issues but with a `[WIKI]` tag.
+
+Supporting the integration of assets like images as email attachments is
+a planned feature.
+
 ### Authentication
 
 Using HTTP basic authentication is not optional at the moment because of
