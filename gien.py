@@ -34,6 +34,11 @@ from progressbar            import ProgressBar, Bar
 from pygit2                 import clone_repository
 from markdown               import markdown
 
+def hexhex(res):
+    h = md5()
+    h.update(res.encode('utf-8'))
+    return h.hexdigest()
+
 def die(*args):
     print("[error]", *args, file=sys.stderr)
     sys.exit(1)
@@ -110,8 +115,11 @@ def render_message(body, **kwargs):
     m = MIMEMultipart('alternative')
     for k,v in kwargs.items():
         m[k.replace("_", "-")] = v
-    m.attach(MIMEText(markdown(body), 'html'))
-    m.attach(MIMEText(body, 'plain'))
+    try:
+        m.attach(MIMEText(markdown(body), 'html'))
+        m.attach(MIMEText(body, 'plain'))
+    except:
+        pass
     return m
 
 def make_thread(opts, r, o):
@@ -165,17 +173,27 @@ def make_thread(opts, r, o):
     return thread
 
 def thread_wiki(repo):
-    def h_msgid(res):
-        h = md5()
-        h.update(res.encode('utf-8'))
-        return "{}@gien.local".format(h.hexdigest())
     h_from = "{}-wiki@noreply.github.com".format(repo.full_name)
-    th = []
+    thread = []
+    root_msgid = hexhex(repo.full_name)
     with TemporaryDirectory() as DIR:
-        clone_repository(repo.clone_url, DIR)
-        for p, n, f in os.walk(DIR):
-            pass
-    pass
+        clone_repository(repo.clone_url.replace(".git",".wiki"), DIR)
+        for r,d,f in os.walk(DIR):
+            if r.find(".git") > -1:
+                continue
+            for ff in f:
+                if ff.endswith(".md"):
+                    path = "{}/{}".format(r,ff)
+                    with open(path, "r") as FILE:
+                        msgid = "{}@{}.wiki".format(hexhex(path), repo) if len(thread)>1 else root_msgid
+                        thread.append(render_message(FILE.read(),
+                            Subject="[WIKI] " + ff[:-3],
+                            From=h_from,
+                            Message_ID=msgid,
+                            To=h_to(repo),
+                            In_Reply_To=root_msgid,
+                            Date=formatdate()))
+    return thread
 
 def main():
     opts = get_options()
@@ -186,6 +204,10 @@ def main():
 
     for issue in data:
         for msg in make_thread(opts, repo, issue):
+            mb.add(msg)
+
+    if opts.wiki:
+        for msg in thread_wiki(repo):
             mb.add(msg)
 
     mb.flush()
