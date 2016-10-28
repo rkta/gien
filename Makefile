@@ -15,9 +15,6 @@ clean:
 	rm -f gien.c gien
 	rm -rf src/ pkg/ *.tar
 
-check:
-	bash -n nibl.bash
-
 install: gien
 	install -Dm755 gien $(DESTDIR)$(PREFIX)/bin/gien
 
