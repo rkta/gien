@@ -79,7 +79,7 @@ def get_options():
 
 def fetch_rate_limit(api):
     limit = api.get_rate_limit()
-    return "{}/{}, reset @ {}".format(limit.rate.remaining,
+    return "{}/{} requests, last reset at {} (UTC)".format(limit.rate.remaining,
             limit.rate.limit, limit.rate.reset)
 
 def fetch_data(opts):
@@ -182,13 +182,15 @@ def thread_wiki(repo):
     thread = []
 
     with TemporaryDirectory() as DIR:
+        print("Cloning wiki...")
         clone_repository(repo.clone_url.replace(".git",".wiki"), DIR)
         for r,d,f in os.walk(DIR):
             if r.find(".git") > -1:
                 continue
             for ff in f:
+                path = "{}/{}".format(r,ff)
+                print("Inspecting {}".format(path))
                 if ff.endswith(".md"):
-                    path = "{}/{}".format(r,ff)
                     with open(path, "r") as FILE:
                         body = FILE.read()
                         date = formatdate()
@@ -222,11 +224,13 @@ def main():
     mb.lock()
 
     if opts.archive_issues:
+        print("Archiving issues...")
         for issue in data:
             for msg in make_thread(opts, repo, issue):
                 mb.add(msg)
 
     if opts.archive_wiki:
+        print("Archiving wiki...")
         for msg in thread_wiki(repo):
             mb.add(msg)
 
