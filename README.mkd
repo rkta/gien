@@ -61,7 +61,7 @@ which in pretty much all cases is too low for me.
 
 ```
 usage: gien.py [-h] [-u USER] [-p PASSWORD] [-r REPOSITORY]
-               [-i {all,open,closed}] [-o OUTPUT] [-l] [-w]
+               [-i {all,open,closed}] [-o OUTPUT] [-l] [-W] [-I]
 
 Export Github issue trackers to local email storage
 
@@ -80,13 +80,18 @@ optional arguments:
   -l, --labels          If the issue has labels, add them to the email
                         Subject: header. If the issue has been marked as
                         closed, at a [CLOSED] label to the subject.
-  -w, --wiki            Convert the associated wiki into an email thread.
+  -W, --archive-wiki    Enable wiki archiving.
+  -I, --archive-issues  Enable issue archiving.
 ```
 
 ### Usage example
 
+Specify `-I|--archive-issues` to archive issues and/or `-W|--archive-wiki`
+to archive wiki data. If neither of these options has been given, an
+empty or unmodified mbox file will be created.
+
 ```
-./gien --user $user --password $password -r 2ion/forecast -i open -o out.mbox
+./gien -I --user $user --password $password -r 2ion/forecast -i open -o out.mbox
 ```
 
 ### License

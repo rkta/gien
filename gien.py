@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # gien - export Github issue tracker & wiki contents to local email storage
-# Copyright (C) 2016 2ion <dev@2ion.de>
+# Copyright (C) 2016 Jens John <jjohn@2ion.de>
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Core
 import os
 import sys
 from argparse               import ArgumentParser
@@ -44,7 +43,6 @@ def die(*args):
     sys.exit(1)
 
 def get_options():
-    r = None
     ap = ArgumentParser(description="Export Github issue trackers to local email storage")
     ap.add_argument("-u", "--user",
             default=None,
@@ -66,10 +64,14 @@ def get_options():
             action="store_true",
             default=False,
             help="If the issue has labels, add them to the email Subject: header. If the issue has been marked as closed, at a [CLOSED] label to the subject.")
-    ap.add_argument("-w", "--wiki",
+    ap.add_argument("-W", "--archive-wiki",
             default=False,
             action="store_true",
-            help="Convert the associated wiki into an email thread.")
+            help="Enable wiki archiving.")
+    ap.add_argument("-I", "--archive-issues",
+            default=False,
+            action="store_true",
+            help="Enable issue archiving.")
     r = ap.parse_args()
     if not (r.user and r.password and r.repository):
         die("Missing option: --user, --password and --repository are required.")
@@ -174,8 +176,9 @@ def make_thread(opts, r, o):
 
 def thread_wiki(repo):
     h_from = "{}-wiki@noreply.github.com".format(repo.full_name)
-    thread = []
     root_msgid = "{}@{}.wiki".format(hexhex(repo.full_name), repo.name)
+    thread = []
+
     with TemporaryDirectory() as DIR:
         clone_repository(repo.clone_url.replace(".git",".wiki"), DIR)
         for r,d,f in os.walk(DIR):
@@ -187,7 +190,7 @@ def thread_wiki(repo):
                     with open(path, "r") as FILE:
                         msgid = "{}@{}.wiki".format(hexhex(path), repo.name) if len(thread)>0 else root_msgid
                         thread.append(render_message(FILE.read(),
-                            Subject="[WIKI] " + ff[:-3],
+                            Subject="{}[WIKI] {}".format("Re: " if len(thread)>0 else "", ff[:-3]),
                             From=h_from,
                             Message_ID=msgid,
                             To=h_to(repo),
@@ -203,11 +206,12 @@ def main():
     mb = mbox(opts.output)
     mb.lock()
 
-    for issue in data:
-        for msg in make_thread(opts, repo, issue):
-            mb.add(msg)
+    if opts.archive_issues:
+        for issue in data:
+            for msg in make_thread(opts, repo, issue):
+                mb.add(msg)
 
-    if opts.wiki:
+    if opts.archive_wiki:
         for msg in thread_wiki(repo):
             mb.add(msg)
 
