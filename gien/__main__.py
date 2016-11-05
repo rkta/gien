@@ -19,9 +19,6 @@
 import os
 import sys
 from argparse               import ArgumentParser
-from email.message          import Message
-from email.mime.multipart   import MIMEMultipart
-from email.mime.text        import MIMEText
 from email.utils            import formatdate
 from hashlib                import md5
 from mailbox                import mbox
@@ -32,7 +29,8 @@ import tempfile
 from github                 import Github, GithubException
 from progressbar            import ProgressBar, Bar
 from pygit2                 import clone_repository
-from markdown               import markdown
+
+from nibl.render import render_multipart_message
 
 def hexhex(res):
     h = md5()
@@ -84,47 +82,14 @@ def fetch_rate_limit(api):
     return "{}/{} requests, last reset at {} (UTC)".format(limit.rate.remaining,
             limit.rate.limit, limit.rate.reset)
 
-def fetch_data(opts):
-    data = []
-    repo = None
+def connect(opts):
     try:
         api = Github(opts.user, opts.password)
         print("Rate limit:", fetch_rate_limit(api), file=sys.stderr)
         repo = api.get_repo(opts.repository)
-        issues = repo.get_issues(state=opts.issues, direction="asc")
-        data = [{
-            "issue"    : i,
-            "comments" : i.get_comments(), # ordered by ascending id
-            "labels"   : i.get_labels() } for i in issues ] # ordered by created asc
     except GithubException as e:
         die("Github API exception", e)
-    return data, repo
-
-def h_message_id(repo, issueid, commentid):
-    return "<{}/issues/{}/{}@github.com>".format(repo, issueid, commentid)
-
-def h_from(obj):
-    return "{} <{}@noreply.github.com>".format(obj.user.login, obj.user.login)
-
-def h_date(obj):
-    return formatdate(obj.created_at.timestamp())
-
-def h_subject(obj, in_reply=True):
-    return ("Re: {}" if in_reply else "{}").format(obj.title)
-
-def h_to(r):
-    return "{} <{}@noreply.github.com>".format(r.full_name, r.name)
-
-def render_message(body, **kwargs):
-    m = MIMEMultipart('alternative')
-    for k,v in kwargs.items():
-        m[k.replace("_", "-")] = v
-    try:
-        m.attach(MIMEText(markdown(body), 'html'))
-        m.attach(MIMEText(body, 'plain'))
-    except:
-        pass
-    return m
+    return repo
 
 def make_thread(opts, r, o):
     lbl = "{}: {}".format(o['issue'].id, o['issue'].title)
@@ -151,7 +116,7 @@ def make_thread(opts, r, o):
 
     common_To = h_to(r)
 
-    thread = [ render_message(o['issue'].body,
+    thread = [ render_multipart_message(o['issue'].body,
                 Subject=common_Subject,
                 From=h_from(o['issue']),
                 To=common_To,
@@ -162,7 +127,7 @@ def make_thread(opts, r, o):
     common_root = thread[-1]['Message-ID']
 
     for comment in o['comments']:
-        thread.append(render_message(comment.body,
+        thread.append(render_multipart_message(comment.body,
             Subject=common_Subject_Re,
             From=h_from(comment),
             To=common_To,
@@ -199,7 +164,7 @@ def thread_wiki(repo):
                         subject = "[WIKI] {}".format(ff[:-3])
                         if len(thread)>0:
                             msgid = "{}@{}.wiki".format(hexhex(path), repo.name)
-                            msg = render_message(body,
+                            msg = render_multipart_message(body,
                                     Subject     = subject,
                                     From        = h_from,
                                     Message_ID  = msgid,
@@ -209,7 +174,7 @@ def thread_wiki(repo):
                                     Date        = date)
                         else:
                             msgid = root_msgid
-                            msg = render_message(body,
+                            msg = render_multipart_message(body,
                                     Subject    = subject,
                                     From       = h_from,
                                     Message_ID = msgid,
@@ -218,61 +183,6 @@ def thread_wiki(repo):
                         thread.append(msg)
     return thread
 
-class WikiThreader(object):
-    def __init__(self, repo):
-        self.repo = repo
-        self.tmpdir = tempfile.mkdtemp()
-
-        self.mime_from = "wiki@noreply.github.com"
-        self.mime_to = h_to(self.repo)
-        self.mime_date = formatdate()
-
-        self.__fetch_data()
-
-    def __mime_msgid(self, msgfile):
-        if not self.started:
-            self.root_msgid = "{}@wiki".format(hexhex(self.repo.full_name))
-            return self.root_msgid
-        return "{}@wiki".format(hexhex(msgfile))
-
-    def __mime_subject(self, msgfile):
-        return "[WIKI] " + msgfile[:-3]
-
-    def __fetch_data(self):
-        clone_repository(self.repo.clone_url.replace(".git",".wiki"), self.tmpdir)
-        self.documents = []
-        self.assets = []
-        for root, dirs, files in os.walk(self.tmpdir):
-            if root.find(".git") > -1: 
-                continue
-            for f in files:
-                def abspath(f):
-                    return "{}/{}".format(root, f)
-                if f.endswith(".md"):
-                    self.documents.append(abspath())
-                elif f.endswitch(".png") or f.endswith(".jpg") or f.endswith(".gif"):
-                    self.assets.append(abspath())
-        self.started = False
-
-    def __read_file(self, path):
-        with open(path, "r") as FILE:
-            return FILE.read()
-
-    def __thread_document(self):
-        msgfile = self.documents.pop()
-        body = self__read_file(msgfile)
-        kwargs = {
-                "Subject": self.__mime_subject(msgfile),
-                "From": self.mime_from,
-                "To": self.mime_to,
-                "Date": self.mime_date,
-                "Message_ID": self.__mime_msgid(msgfile) }
-        if self.started:
-            kwargs["In_Reply_To"] = self.root_msgid
-            kwargs["References"] = self.root_msgid
-        else:
-            self.started = True
-        return render_message(body, **kwargs)
 
     def __iter__(self):
         return self
