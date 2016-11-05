@@ -27,6 +27,7 @@ from hashlib                import md5
 from mailbox                import mbox
 from shutil                 import get_terminal_size
 from tempfile               import TemporaryDirectory
+import tempfile
 # Third-party
 from github                 import Github, GithubException
 from progressbar            import ProgressBar, Bar
@@ -43,7 +44,7 @@ def die(*args):
     sys.exit(1)
 
 def get_options():
-    ap = ArgumentParser(description="Export Github issue trackers to local email storage")
+    ap = ArgumentParser(description="Export Github issue trackers to local email storage", prog="gien")
     ap.add_argument("-u", "--user",
             default=None,
             help="Github API authentication: user")
@@ -72,6 +73,7 @@ def get_options():
             default=False,
             action="store_true",
             help="Enable issue archiving.")
+    ap.add_argument("--version", action="version", version="%(prog)s 0.3.1")
     r = ap.parse_args()
     if not (r.user and r.password and r.repository):
         die("Missing option: --user, --password and --repository are required.")
@@ -215,6 +217,71 @@ def thread_wiki(repo):
                                     Date       = date)
                         thread.append(msg)
     return thread
+
+class WikiThreader(object):
+    def __init__(self, repo):
+        self.repo = repo
+        self.tmpdir = tempfile.mkdtemp()
+
+        self.mime_from = "wiki@noreply.github.com"
+        self.mime_to = h_to(self.repo)
+        self.mime_date = formatdate()
+
+        self.__fetch_data()
+
+    def __mime_msgid(self, msgfile):
+        if not self.started:
+            self.root_msgid = "{}@wiki".format(hexhex(self.repo.full_name))
+            return self.root_msgid
+        return "{}@wiki".format(hexhex(msgfile))
+
+    def __mime_subject(self, msgfile):
+        return "[WIKI] " + msgfile[:-3]
+
+    def __fetch_data(self):
+        clone_repository(self.repo.clone_url.replace(".git",".wiki"), self.tmpdir)
+        self.documents = []
+        self.assets = []
+        for root, dirs, files in os.walk(self.tmpdir):
+            if root.find(".git") > -1: 
+                continue
+            for f in files:
+                def abspath(f):
+                    return "{}/{}".format(root, f)
+                if f.endswith(".md"):
+                    self.documents.append(abspath())
+                elif f.endswitch(".png") or f.endswith(".jpg") or f.endswith(".gif"):
+                    self.assets.append(abspath())
+        self.started = False
+
+    def __read_file(self, path):
+        with open(path, "r") as FILE:
+            return FILE.read()
+
+    def __thread_document(self):
+        msgfile = self.documents.pop()
+        body = self__read_file(msgfile)
+        kwargs = {
+                "Subject": self.__mime_subject(msgfile),
+                "From": self.mime_from,
+                "To": self.mime_to,
+                "Date": self.mime_date,
+                "Message_ID": self.__mime_msgid(msgfile) }
+        if self.started:
+            kwargs["In_Reply_To"] = self.root_msgid
+            kwargs["References"] = self.root_msgid
+        else:
+            self.started = True
+        return render_message(body, **kwargs)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if len(self.documents)>0:
+            return self.__thread_document()
+        else:
+            raise StopIteration()
 
 def main():
     opts = get_options()
