@@ -141,58 +141,6 @@ def make_thread(opts, r, o):
     pb.finish()
     return thread
 
-def thread_wiki(repo):
-    h_from = "wiki@noreply.github.com".format(repo.full_name)
-    to = h_to(repo)
-    root_msgid = "{}@wiki".format(hexhex(repo.full_name))
-
-    thread = []
-
-    with TemporaryDirectory() as DIR:
-        print("Cloning wiki...")
-        clone_repository(repo.clone_url.replace(".git",".wiki"), DIR)
-        for r,d,f in os.walk(DIR):
-            if r.find(".git") > -1:
-                continue
-            for ff in f:
-                path = "{}/{}".format(r,ff)
-                print("Inspecting {}".format(path))
-                if ff.endswith(".md"):
-                    with open(path, "r") as FILE:
-                        body = FILE.read()
-                        date = formatdate()
-                        subject = "[WIKI] {}".format(ff[:-3])
-                        if len(thread)>0:
-                            msgid = "{}@{}.wiki".format(hexhex(path), repo.name)
-                            msg = render_multipart_message(body,
-                                    Subject     = subject,
-                                    From        = h_from,
-                                    Message_ID  = msgid,
-                                    To          = to,
-                                    In_Reply_To = root_msgid,
-                                    References  = root_msgid,
-                                    Date        = date)
-                        else:
-                            msgid = root_msgid
-                            msg = render_multipart_message(body,
-                                    Subject    = subject,
-                                    From       = h_from,
-                                    Message_ID = msgid,
-                                    To         = to,
-                                    Date       = date)
-                        thread.append(msg)
-    return thread
-
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if len(self.documents)>0:
-            return self.__thread_document()
-        else:
-            raise StopIteration()
-
 def main():
     opts = get_options()
     data, repo = fetch_data(opts)

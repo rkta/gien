@@ -2,8 +2,6 @@ class AbstractThreader(object):
     def __init__(self, repo):
         self.repo = repo
 
-    def __connect(self):
-
     """ Functions of the pygithub repository object """
 
     def h_to(self):
@@ -26,7 +24,7 @@ class AbstractThreader(object):
     """ Iterator protocol """
 
     def __iter__(self):
-        pass
+        return self
 
     def __next__(self):
         raise StopIteration()
@@ -88,17 +86,39 @@ class WikiThreader(AbstractThreader):
             self.started = True
         return render_multipart_message(body, **kwargs)
 
+    def __next__(self):
+        if len(self.documents)>0:
+            return __thread_document()
+        raise StopIteration()
+
 class IssueThreader(AbstractThreader):
-    def __init__(self, repo):
+    def __init__(self, repo, add_labels=False):
         super().__init__(repo)
+
+        self.add_labels = add_labels
+        self.current_issue = None
+
         self.__fetch_issues()
 
     def __fetch_issues(self):
         issues = self.repo.get_issues(state=opts.issues, direction="asc")
-        self.data = [{
+        self.issues = [{
             "issue"    : i,
             "comments" : i.get_comments(), # ordered by ascending id
             "labels"   : i.get_labels() } for i in issues ] # ordered by created asc
 
-    def __thread_issue(self):
+    def __thread_message(self):
         pass
+
+    def __is_exhausted(self):
+        return (self.current_issue is None and
+                len(self.current_issue_comments) == 0)
+
+    def __next__(self):
+        if self.__is_exhausted():
+            if len(self.issues) == 0:
+                raise StopIteration()
+            self.current_issue = self.issues.pop()
+            self.current_issue_labels = self.current_issue["labels"]
+            self.current_issue_comments = self.current_issue["comments"]
+            self.current_issue = self.current_issue["issue"]
