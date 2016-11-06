@@ -20,7 +20,6 @@ import os
 import sys
 from argparse               import ArgumentParser
 from email.utils            import formatdate
-from hashlib                import md5
 from mailbox                import mbox
 from shutil                 import get_terminal_size
 from tempfile               import TemporaryDirectory
@@ -30,12 +29,7 @@ from github                 import Github, GithubException
 from progressbar            import ProgressBar, Bar
 from pygit2                 import clone_repository
 
-from nibl.render import render_multipart_message
-
-def hexhex(res):
-    h = md5()
-    h.update(res.encode('utf-8'))
-    return h.hexdigest()
+from gien.render import render_multipart_message
 
 def die(*args):
     print("[error]", *args, file=sys.stderr)
