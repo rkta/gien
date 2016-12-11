@@ -57,11 +57,18 @@ which in pretty much all cases is too low for me.
 * [python-progressbar](https://github.com/niltonvolpato/python-progressbar)
 * python-pygit2
 
+### Installation
+
+```
+python3 setup.py install --skip-build
+```
+
 ### Synopsis
 
 ```
-usage: gien.py [-h] [-u USER] [-p PASSWORD] [-r REPOSITORY]
-               [-i {all,open,closed}] [-o OUTPUT] [-l] [-W] [-I]
+usage: gien [-h] [-u USER] [-p PASSWORD] [-r REPOSITORY]
+                   [-i {all,open,closed}] [-o OUTPUT] [-l] [-W] [-I]
+                   [-t THREADS]
 
 Export Github issue trackers to local email storage
 
@@ -82,6 +89,8 @@ optional arguments:
                         closed, at a [CLOSED] label to the subject.
   -W, --archive-wiki    Enable wiki archiving.
   -I, --archive-issues  Enable issue archiving.
+  -t THREADS, --threads THREADS
+                        Number of worker threads
 ```
 
 ### Usage example

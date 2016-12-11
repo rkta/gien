@@ -28,7 +28,7 @@ from mailbox                import mbox
 from markdown               import markdown
 from pygit2                 import clone_repository
 from tempfile               import TemporaryDirectory
-from tui                    import TUIProgressBar
+from gien.tui               import TUIProgressBar
 import os
 import sys
 
