@@ -60,7 +60,7 @@ which in pretty much all cases is too low for me.
 ### Installation
 
 ```
-python3 setup.py install --skip-build
+python3 setup.py install
 ```
 
 ### Synopsis
