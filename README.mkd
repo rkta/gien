@@ -43,6 +43,18 @@ just like the issues but with a `[WIKI]` tag.
 Supporting the integration of assets like images as email attachments is
 a planned feature.
 
+### Multithreading
+
+By specifying the --threads option, you can increase the number of
+parallel network requests made when archiving issue trackers. The thread
+count defaults to 4. This significantly speeds up the archiving process.
+
+Since local processing of the data is very fast and the mirroring of the
+wiki relies on first executing a `git clone` command to fetch the remote
+data and then process all the data locally, gien does not implement
+parallel processing for wiki data (yet; but it's low priority because
+there's little to gain).
+
 ### Authentication
 
 Using HTTP basic authentication is not optional at the moment because of

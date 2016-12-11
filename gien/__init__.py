@@ -60,7 +60,7 @@ def get_options():
             action="store_true",
             help="Enable issue archiving.")
     ap.add_argument("-t", "--threads",
-            default=2,
+            default=4,
             type=int,
             help="Number of worker threads")
     r = ap.parse_args()
@@ -77,7 +77,7 @@ def main():
     mb.lock()
 
     if opts.archive_issues:
-        with TUIProgressBar("Issues", len(data)) as bar:
+        with TUIProgressBar("Archiving issues", len(data)) as bar:
             with ThreadPoolExecutor(max_workers = opts.threads) as Exec:
                 for thread in Exec.map(thread_issue, [ (opts, repo, issue,) for
                     issue in data ]):
@@ -86,8 +86,9 @@ def main():
                         mb.add(msg)
 
     if opts.archive_wiki:
-        for msg in thread_wiki(repo):
-            mb.add(msg)
+        with TUIProgressBar("Archiving the wiki", 1) as bar:
+            for msg in thread_wiki(repo):
+                mb.add(msg)
 
     mb.flush()
     mb.unlock()

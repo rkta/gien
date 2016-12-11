@@ -82,14 +82,12 @@ def thread_wiki(repo):
     thread = []
 
     with TemporaryDirectory() as DIR:
-        print("Cloning wiki...")
         clone_repository(repo.clone_url.replace(".git",".wiki"), DIR)
         for r,d,f in os.walk(DIR):
             if r.find(".git") > -1:
                 continue
             for ff in f:
                 path = "{}/{}".format(r,ff)
-                print("Inspecting {}".format(path))
                 if ff.endswith(".md"):
                     with open(path, "r") as FILE:
                         body = FILE.read()
