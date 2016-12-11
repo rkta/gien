@@ -4,11 +4,11 @@ PREFIX ?= /usr
 
 all: gien
 
-gien.c: gien.py
+%.c: %.py
 	cython -3 -o $@ $< --embed
 
-gien: gien.c
-	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+gien: gien.c tui.c
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 	strip $@
 
 clean:

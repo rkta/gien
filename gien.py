@@ -16,22 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
 from argparse               import ArgumentParser
+from concurrent.futures     import ThreadPoolExecutor
 from email.message          import Message
 from email.mime.multipart   import MIMEMultipart
 from email.mime.text        import MIMEText
 from email.utils            import formatdate
+from github                 import Github, GithubException
 from hashlib                import md5
 from mailbox                import mbox
-from shutil                 import get_terminal_size
-from tempfile               import TemporaryDirectory
-from concurrent.futures     import ThreadPoolExecutor
-# Third-party
-from github                 import Github, GithubException
-from pygit2                 import clone_repository
 from markdown               import markdown
+from pygit2                 import clone_repository
+from tempfile               import TemporaryDirectory
+from tui                    import TUIProgressBar
+import os
+import sys
 
 def hexhex(res):
     h = md5()
@@ -217,11 +216,13 @@ def main():
     mb.lock()
 
     if opts.archive_issues:
-        with ThreadPoolExecutor(max_workers = opts.threads) as Exec:
-            for thread in Exec.map(make_thread, [ (opts, repo, issue,) for
-                issue in data ]):
-                for msg in thread:
-                    mb.add(msg)
+        with TUIProgressBar("Issues", len(data)) as bar:
+            with ThreadPoolExecutor(max_workers = opts.threads) as Exec:
+                for thread in Exec.map(make_thread, [ (opts, repo, issue,) for
+                    issue in data ]):
+                    bar.tick()
+                    for msg in thread:
+                        mb.add(msg)
 
     if opts.archive_wiki:
         for msg in thread_wiki(repo):
