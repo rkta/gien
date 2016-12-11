@@ -27,9 +27,9 @@ from hashlib                import md5
 from mailbox                import mbox
 from shutil                 import get_terminal_size
 from tempfile               import TemporaryDirectory
+from concurrent.futures     import ThreadPoolExecutor
 # Third-party
 from github                 import Github, GithubException
-from progressbar            import ProgressBar, Bar
 from pygit2                 import clone_repository
 from markdown               import markdown
 
@@ -41,6 +41,10 @@ def hexhex(res):
 def die(*args):
     print("[error]", *args, file=sys.stderr)
     sys.exit(1)
+
+def tick():
+    sys.stdout.write(".")
+    sys.stdout.flush()
 
 def get_options():
     ap = ArgumentParser(description="Export Github issue trackers to local email storage")
@@ -72,6 +76,10 @@ def get_options():
             default=False,
             action="store_true",
             help="Enable issue archiving.")
+    ap.add_argument("-t", "--threads",
+            default=2,
+            type=int,
+            help="Number of worker threads")
     r = ap.parse_args()
     if not (r.user and r.password and r.repository):
         die("Missing option: --user, --password and --repository are required.")
@@ -124,20 +132,8 @@ def render_message(body, **kwargs):
         pass
     return m
 
-def make_thread(opts, r, o):
-    lbl = "{}: {}".format(o['issue'].id, o['issue'].title)
-    (w, _) = get_terminal_size()
-    lw = int(w * 0.6)
-    if len(lbl)>lw-1:
-        s = lw-4
-        lbl = lbl[:s]
-        lbl += "... "
-    else:
-        lbl = lbl.ljust(lw, ' ')
-    pb = ProgressBar(
-            widgets=[ lbl, Bar(left='[', right=']') ],
-            maxval=o['issue'].comments+1).start()
-    tick = 1
+def make_thread(tup):
+    (opts, r, o) = tup
 
     common_Subject = "{}".format(o['issue'].title)
     if opts.labels:
@@ -168,10 +164,7 @@ def make_thread(opts, r, o):
             Message_ID=h_message_id(r.full_name, o['issue'].id, comment.id),
             In_Reply_To=common_root,
             References=common_root))
-        tick += 1
-        pb.update(tick)
 
-    pb.finish()
     return thread
 
 def thread_wiki(repo):
@@ -224,13 +217,13 @@ def main():
     mb.lock()
 
     if opts.archive_issues:
-        print("Archiving issues...")
-        for issue in data:
-            for msg in make_thread(opts, repo, issue):
-                mb.add(msg)
+        with ThreadPoolExecutor(max_workers = opts.threads) as Exec:
+            for thread in Exec.map(make_thread, [ (opts, repo, issue,) for
+                issue in data ]):
+                for msg in thread:
+                    mb.add(msg)
 
     if opts.archive_wiki:
-        print("Archiving wiki...")
         for msg in thread_wiki(repo):
             mb.add(msg)
 
