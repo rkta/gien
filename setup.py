@@ -4,14 +4,15 @@ from setuptools import setup, find_packages
 
 setup(
         name = "gien",
-        version = "0.3.2",
+        version = "0.4.0",
         packages = ["gien"],
 
         install_requires = [
                 "PyGithub",
                 "markdown",
                 "progressbar",
-                "pygit2"
+                "pygit2",
+                "requests"
         ],
 
         entry_points = {
