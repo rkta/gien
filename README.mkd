@@ -26,6 +26,17 @@ containing the original body text.
 Because I'm just using python-markdown for now, some Github-flavoured
 things could be rendered incorrectly.
 
+Including some image attachments (-d, --download-images option), a
+typical message has the following structure:
+
+```
+  I     1 <no description>                          [multipa/alternativ, 7bit, 1.5K] 
+  I     2 ├─><no description>                       [text/html, 7bit, us-ascii, 0.6K] 
+  I     3 └─><no description>                       [text/plain, 7bit, us-ascii, 0.6K] 
+  A     4 ddd1852a-71c5-11e5-9ec2-0da058cea7ff.png  [image/png, base64, 106K] 
+  A     5 e1db00ce-71c5-11e5-8909-bd2991156351.png  [image/png, base64, 123K]
+```
+
 ### Issue tracker mirroring
 
 When specifying an output mailbox that already exists and contains
