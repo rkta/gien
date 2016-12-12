@@ -1,7 +1,8 @@
 ## gien
 
 gien is a tool for exporting the contents of any Github issue tracker to
-a local [mbox](https://en.wikipedia.org/wiki/Mbox) file as email,
+a local [mbox](https://en.wikipedia.org/wiki/Mbox) file or
+[Maildir](https://en.wikipedia.org/wiki/Maildir) directory as email,
 thereby mapping all issues and comments to email threads.
 
 The structure of the exported email threads mimics Github's email
@@ -23,10 +24,10 @@ things could be rendered incorrectly.
 
 ### Issue tracker mirroring
 
-When specifying an output mbox file that already exists and contains
-messages, the program will just append to that file. You can use that
-behaviour to poll the bug tracker of any Github repository for updates
-for any real email client will help you to delete any dupes.
+When specifying an output mailbox that already exists and contains
+messages, the program will just append to that file or Maildir.  You can
+use that behaviour to poll the bug tracker of any Github repository for
+updates for any real email client will help you to delete any dupes.
 
 More intelligent features catering to the purpoes of mirroring issue
 trackers can be expected in the feature, including partial updates.
@@ -81,38 +82,41 @@ On Arch Linux, you can simply install the package
 ### Synopsis
 
 ```
-usage: gien [-h] [-u USER] [-p PASSWORD] [-r REPOSITORY]
-                   [-i {all,open,closed}] [-o OUTPUT] [-l] [-W] [-I]
-                   [-t THREADS]
+usage: gien [-h] [-I] [-W] [-i {all,open,closed}] [-l] [-o OUTPUT]
+                   [-p PASSWORD] [-r REPOSITORY] [-t THREADS] [-u USER]
+                   [--mailbox-type {mbox,maildir}]
 
 Export Github issue trackers to local email storage
 
 optional arguments:
   -h, --help            show this help message and exit
-  -u USER, --user USER  Github API authentication: user
+  -I, --archive-issues  Enable issue archiving.
+  -W, --archive-wiki    Enable wiki archiving. Defaults to off.
+  -i {all,open,closed}, --issues {all,open,closed}
+                        Filter issues by state. Defaults to all.
+  -l, --labels          If the issue has labels, add them to the email
+                        Subject: header. If the issue has been marked as
+                        closed, at a [CLOSED] label to the subject.
+  -o OUTPUT, --output OUTPUT
+                        Path to the output mbox file or Maildir. Will be
+                        created if it doesn't exist.
   -p PASSWORD, --password PASSWORD
                         Github API authentication: password
   -r REPOSITORY, --repository REPOSITORY
                         Github repository name the issue tracker of which
                         shall be exported. Example: 2ion/gien
-  -i {all,open,closed}, --issues {all,open,closed}
-                        Filter issues by state. Defaults to all.
-  -o OUTPUT, --output OUTPUT
-                        Path to the output mbox file.
-  -l, --labels          If the issue has labels, add them to the email
-                        Subject: header. If the issue has been marked as
-                        closed, at a [CLOSED] label to the subject.
-  -W, --archive-wiki    Enable wiki archiving.
-  -I, --archive-issues  Enable issue archiving.
   -t THREADS, --threads THREADS
-                        Number of worker threads
+                        Number of worker threads. Defaults to 4.
+  -u USER, --user USER  Github API authentication: user
+  --mailbox-type {mbox,maildir}
+                        Specify the mailbox type to use. Defaults to mbox.
 ```
 
 ### Usage example
 
-Specify `-I|--archive-issues` to archive issues and/or `-W|--archive-wiki`
-to archive wiki data. If neither of these options has been given, an
-empty or unmodified mbox file will be created.
+Specify `-I|--archive-issues` to archive issues and/or
+`-W|--archive-wiki` to archive wiki data. If neither of these options
+has been given, an empty or unmodified mailbox will be created.
 
 ```
 ./gien -I --user $user --password $password -r 2ion/forecast -i open -o out.mbox
@@ -120,4 +124,20 @@ empty or unmodified mbox file will be created.
 
 ### License
 
-GNU General Public License v3 or later. See LICENSE for details.
+```
+gien -- export Github issue tracker & wiki contents to local email storage
+Copyright (C) 2016 Jens John <jjohn@2ion.de>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+```
