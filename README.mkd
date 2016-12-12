@@ -10,8 +10,8 @@ notifications: There is a root message for every issue, and all comments
 on that issue reply to that root.
 
 The tool can also download images which are referenced using the
-markdown syntax `![description](image-url)` in issues or comments and
-attach to the correct email message.
+markdown syntax `![description](image-url)` in issues, comments as well
+as wiki pages and attach to the correct email message.
 
 We believe that this tool will prove itself helpful when leaving Github,
 or just for archiving bug trackers.
@@ -53,11 +53,8 @@ There is no ETA, though.
 Repository wikis can be cloned just like the repos themselves and yield
 a collection of markdown files corressponding to the individual 'pages'.
 
-Currently, when specifying the --wiki option, wiki pages are threaded
-just like the issues but with a `[WIKI]` tag.
-
-Supporting the integration of assets like images as email attachments is
-a planned feature.
+When specifying the --wiki option, wiki pages are threaded just like the
+issues but with a `[WIKI]` tag.
 
 ### Multithreading
 
@@ -137,8 +134,24 @@ Specify `-I|--archive-issues` to archive issues and/or
 `-W|--archive-wiki` to archive wiki data. If neither of these options
 has been given, an empty or unmodified mailbox will be created.
 
+Archive issues from the 2ion/forecast repository in `out.mbox`:
+
 ```
-./gien -I --user $user --password $password -r 2ion/forecast -i open -o out.mbox
+gien -I --user $user --password $password -r 2ion/forecast -i open -o out.mbox
+```
+
+Archive closed issues as well as the wiki from the mpv-player/mpv
+repository, collect referenced images, adding tags and states as labels,
+in a Maildir `mpv`. Because this repository has a lot of content, we
+increase the number of worker threads to 10 in order to speed up the
+archiving process.
+
+Note that because the pygithub library does not support multithreading
+yet the initial bootstrap process were all issue metadata is downloaded
+might take a while before the multithreaded processing part starts.
+
+```
+gien -I -l -W -d -t 10 --mailbox-type maildir -o mpv -u $user -p $password -r mpv-player/mpv
 ```
 
 ### License
