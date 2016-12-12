@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 # python-progressbar specialization with context management support
-# Copyright (C) 2016 Jens John <jjohn@2ion.de>
-#
 # Usage:
 # with TUIProgressBar("Mylabel", 100) as bar:
 #    do_something()
