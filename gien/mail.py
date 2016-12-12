@@ -95,7 +95,7 @@ def thread_issue(tup):
     return thread
 
 def thread_wiki(repo, opts):
-    h_from = "wiki@noreply.github.com".format(repo.full_name)
+    h_from = "{}/wiki <wiki@noreply.github.com>".format(repo.full_name)
     to = h_to(repo)
     root_msgid = "{}@wiki".format(hexhex(repo.full_name))
 
