@@ -64,7 +64,7 @@ def main():
 
     if opts.archive_wiki:
         with TUIProgressBar("Archiving the wiki", 1) as bar:
-            for msg in thread_wiki(repo):
+            for msg in thread_wiki(repo, opts):
                 mb.add(msg)
 
     mb.flush()
