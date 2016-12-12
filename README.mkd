@@ -9,8 +9,12 @@ The structure of the exported email threads mimics Github's email
 notifications: There is a root message for every issue, and all comments
 on that issue reply to that root.
 
+The tool can also download images which are referenced using the
+markdown syntax `![description](image-url)` in issues or comments and
+attach to the correct email message.
+
 We believe that this tool will prove itself helpful when leaving Github,
-or just for archiving bug trackers. I am using it for either purpose.
+or just for archiving bug trackers.
 
 ### Email format
 
@@ -82,8 +86,8 @@ On Arch Linux, you can simply install the package
 ### Synopsis
 
 ```
-usage: gien [-h] [-I] [-W] [-i {all,open,closed}] [-l] [-o OUTPUT]
-                   [-p PASSWORD] [-r REPOSITORY] [-t THREADS] [-u USER]
+usage: gien [-h] [-I] [-W] [-d] [-i {all,open,closed}] [-l] [-o OUTPUT]
+                   -p PASSWORD -r REPOSITORY [-t THREADS] -u USER
                    [--mailbox-type {mbox,maildir}]
 
 Export Github issue trackers to local email storage
@@ -92,6 +96,9 @@ optional arguments:
   -h, --help            show this help message and exit
   -I, --archive-issues  Enable issue archiving.
   -W, --archive-wiki    Enable wiki archiving. Defaults to off.
+  -d, --download-images
+                        Enable the downloading of image attachments to issues
+                        and comments.
   -i {all,open,closed}, --issues {all,open,closed}
                         Filter issues by state. Defaults to all.
   -l, --labels          If the issue has labels, add them to the email

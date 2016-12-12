@@ -30,6 +30,7 @@ def get_options():
 
     ap.add_argument("-I", "--archive-issues", default=False, action="store_true", help="Enable issue archiving.")
     ap.add_argument("-W", "--archive-wiki", default=False, action="store_true", help="Enable wiki archiving. Defaults to off.")
+    ap.add_argument("-d", "--download-images", default=False, action="store_true", help="Enable the downloading of image attachments to issues and comments.")
     ap.add_argument("-i", "--issues", default="all", choices=["all", "open", "closed"], help="Filter issues by state. Defaults to all.")
     ap.add_argument("-l", "--labels", action="store_true", default=False, help="If the issue has labels, add them to the email Subject: header. If the issue has been marked as closed, at a [CLOSED] label to the subject.")
     ap.add_argument("-o", "--output", default="output.mbox", help="Path to the output mbox file or Maildir. Will be created if it doesn't exist.")

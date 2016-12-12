@@ -1,4 +1,5 @@
 from email.message          import Message
+from email.mime.image       import MIMEImage
 from email.mime.multipart   import MIMEMultipart
 from email.mime.text        import MIMEText
 from email.utils            import formatdate
@@ -6,7 +7,10 @@ from hashlib                import md5
 from markdown               import markdown
 from pygit2                 import clone_repository
 from tempfile               import TemporaryDirectory
+from urllib.parse           import urlparse
 import os
+import re
+import requests
 
 def hexhex(res):
     h = md5()
@@ -28,16 +32,32 @@ def h_subject(obj, in_reply=True):
 def h_to(r):
     return "{} <{}@noreply.github.com>".format(r.full_name, r.name)
 
-def render_message(body, **kwargs):
+def mime_images(body):
+    for url in [ m.group(1) for m in re.finditer("!\[.+?\]\((.+?)\)", body) ]:
+        try:
+            imgfile = urlparse(url).path.split("/")[-1]
+            res = requests.get(url)
+            img = MIMEImage(res.content)
+            img.add_header("Content-Disposition", "attachment", filename = imgfile)
+            yield img
+        except:
+            continue
+
+def render_message(body, opts, **kwargs):
+    p = MIMEMultipart()
     m = MIMEMultipart('alternative')
     for k,v in kwargs.items():
-        m[k.replace("_", "-")] = v
+        p[k.replace("_", "-")] = v
     try:
         m.attach(MIMEText(markdown(body), 'html'))
         m.attach(MIMEText(body, 'plain'))
+        p.attach(m)
+        if opts.download_images:
+            for img in mime_images(body):
+                p.attach(img)
     except:
         pass
-    return m
+    return p
 
 def thread_issue(tup):
     (opts, r, o) = tup
@@ -52,7 +72,7 @@ def thread_issue(tup):
 
     common_To = h_to(r)
 
-    thread = [ render_message(o['issue'].body,
+    thread = [ render_message(o['issue'].body, opts,
                 Subject=common_Subject,
                 From=h_from(o['issue']),
                 To=common_To,
@@ -63,7 +83,7 @@ def thread_issue(tup):
     common_root = thread[-1]['Message-ID']
 
     for comment in o['comments']:
-        thread.append(render_message(comment.body,
+        thread.append(render_message(comment.body, opts,
             Subject=common_Subject_Re,
             From=h_from(comment),
             To=common_To,
