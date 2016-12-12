@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
         name = "gien",
-        version = "0.4.0",
+        version = "0.4.1",
         packages = ["gien"],
 
         install_requires = [
