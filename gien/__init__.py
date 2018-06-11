@@ -34,15 +34,21 @@ def get_options():
     ap.add_argument("-d", "--download-images", default=False, action="store_true", help="Enable the downloading of image attachments to issues and comments.")
     ap.add_argument("-i", "--issues", default="all", choices=["all", "open", "closed"], help="Filter issues by state. Defaults to all.")
     ap.add_argument("-l", "--labels", action="store_true", default=False, help="If the issue has labels, add them to the email Subject: header. If the issue has been marked as closed, at a [CLOSED] label to the subject.")
-    ap.add_argument("-o", "--output", default="output.mbox", help="Path to the output mbox file or Maildir. Will be created if it doesn't exist.")
+    ap.add_argument("-o", "--output", default=None, help="Path to the output mbox file or Maildir. Will be created if it doesn't exist.")
     ap.add_argument("-p", "--password", required=True, help="Github API authentication: password")
     ap.add_argument("-r", "--repository", required=True, help="Github repository name the issue tracker of which shall be exported. Example: 2ion/gien")
     ap.add_argument("-t", "--threads", default=4, type=int, help="Number of worker threads. Defaults to 4.")
     ap.add_argument("-u", "--user", required=True, help="Github API authentication: user")
-    ap.add_argument("--mailbox-type", type=str, choices=[ "mbox", "maildir" ], default="mbox", help="Specify the mailbox type to use. Defaults to mbox.")
+    ap.add_argument("-m", "--mailbox-type", type=str, choices=[ "mbox", "maildir" ], default="mbox", help="Specify the mailbox type to use. Defaults to mbox.")
 
-    r = ap.parse_args()
-    return r
+    args = ap.parse_args()
+
+    if args.output is None:
+        args.output = args.output or "{basename}.{suffix}".format(
+                basename=args.repository.replace("/", "_"),
+                suffix=args.mailbox_type)
+
+    return args
 
 def main():
     opts = get_options()
