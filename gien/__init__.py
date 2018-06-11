@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from concurrent.futures import ThreadPoolExecutor
 from gien.remote import fetch_issues
 from gien.mail import thread_wiki, thread_issue
@@ -26,7 +26,8 @@ import os
 import sys
 
 def get_options():
-    ap = ArgumentParser(description="Export Github issue trackers to local email storage")
+    ap = ArgumentParser(description="Export Github issue trackers to local email storage",
+            formatter_class=ArgumentDefaultsHelpFormatter)
 
     ap.add_argument("-I", "--archive-issues", default=False, action="store_true", help="Enable issue archiving.")
     ap.add_argument("-W", "--archive-wiki", default=False, action="store_true", help="Enable wiki archiving. Defaults to off.")
