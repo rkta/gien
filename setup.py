@@ -8,7 +8,7 @@ setup(
         packages = ["gien"],
 
         install_requires = [
-                "PyGithub",
+                "PyGithub>=1.52",
                 "markdown",
                 "progressbar",
                 "pygit2",
