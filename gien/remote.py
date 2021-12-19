@@ -1,9 +1,11 @@
 from github import Github, GithubException
 
+
 def fetch_rate_limit(api):
     limit = api.get_rate_limit()
-    return "{}/{} requests, last reset at {} (UTC)".format(limit.rate.remaining,
-            limit.rate.limit, limit.rate.reset)
+    return "{}/{} requests, last reset at {} (UTC)".format(limit.core.remaining,
+            limit.core.limit, limit.core.reset)
+
 
 def fetch_issues(opts):
     data = []
